@@ -40,39 +40,67 @@ void largeInt::setNum(vector<char>& a) {
 	_isNeg = false;
 }
 
-largeInt largeInt::operator+(largeInt a) {
+largeInt largeInt::operator+(largeInt& a) {
+	largeInt res;
+	vector<char> val;
+	if (_isNeg xor a.getIsNeg()) {
+		
+	} else {
+		res.setIsNeg(_isNeg);
+	}
+	return res;
+}
+
+largeInt largeInt::operator-(largeInt& a) {
 	largeInt res;
 
 	return res;
 }
 
-largeInt largeInt::operator-(largeInt a) {
-	largeInt res;
-
-	return res;
-}
-
-largeInt largeInt::operator*(largeInt a) {
+largeInt largeInt::operator*(largeInt& a) {
 	largeInt res;
 	
 	return res;
 }
 
-bool largeInt::operator>(largeInt a) {
-	
+bool largeInt::operator>(largeInt& a) {
+	if (_isNeg xor a.getIsNeg()) return !_isNeg;
+
+	vector<char>* rightVal = a.getNum();
+	size_t sz = _num->size();
+	if (sz > rightVal->size()) return !_isNeg;
+	if (sz < rightVal->size()) return _isNeg;
+
+	sz--;
+	while (sz >= 0) {
+		if ((*_num)[sz] > (*rightVal)[sz]) return !_isNeg;
+		if ((*_num)[sz] < (*rightVal)[sz]) return _isNeg;
+		sz--;
+	}
+	return false;
 }
 
-bool largeInt::operator>=(largeInt a) {
-	
+bool largeInt::operator==(largeInt& a) {
+	if (_isNeg != a.getIsNeg()) return false;
+	size_t sz = _num->size();
+	vector<char>* otherVal = a.getNum();
+	if (sz != otherVal->size()) return false;
+
+	sz--;
+	while (sz >= 0) {
+		if ((*_num)[sz] != (*otherVal)[sz]) return false;
+		sz--;
+	}
+	return true;
 }
 
-largeInt largeInt::operator/(largeInt a) {
+largeInt largeInt::operator/(largeInt& a) {
 	largeInt res;
 	
 	return res;
 }
 
-largeInt largeInt::operator%(largeInt a) {
+largeInt largeInt::operator%(largeInt& a) {
 	largeInt res;
 	
 	return res;

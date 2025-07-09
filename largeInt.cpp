@@ -79,7 +79,17 @@ void largeInt::operator+=(largeInt& a) {
 	vector<unsigned char>* Aval = a.getNum();
 	if (Aval->size()) {
 		if (_isNeg ^ a.getIsNeg()) {
+			// |_num| < |a|: flip sign, switch _num and a, subtract a
+			// |_num| > |a|: not need to flip sign, just subtract a
+			// |_num| = |a|: subtract a, switch sign of _num if isNeg is true ???
+			if (_num->size() > Aval->size()) {
+				
+			} else if (_num->size() < Aval->size()){
 
+			} else {
+				size_t sz = _num->size();
+				
+			}
 		} else {
 			short temp = 0;
 			size_t i = 0;
@@ -105,20 +115,19 @@ void largeInt::operator+=(largeInt& a) {
 		}
 	}
 }
-
 void largeInt::operator-=(largeInt& a) {
-
+	a.setIsNeg(!(a.getIsNeg()));
+	*this += a;
+	a.setIsNeg(!(a.getIsNeg()));
 }
 
 largeInt largeInt::operator+(largeInt& a) {
-	largeInt res(*_num);
-	res.setIsNeg(_isNeg);
+	largeInt res(*this);
 	res += a;
 	return res;
 }
 largeInt largeInt::operator-(largeInt& a) {
-	largeInt res(*_num);
-	res.setIsNeg(_isNeg);
+	largeInt res(*this);
 	res -= a;
 	return res;
 }

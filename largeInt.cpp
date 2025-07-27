@@ -1,76 +1,76 @@
 #include "largeInt.h"
-void inputing(vector<unsigned char>*& a, int val) {
-	//val is not negative at this point
-	while (val) {
-		a->push_back((unsigned char)(val & 0xFF));
-		val >>= 8;
-	}
+void inputing(vector<char>*& a, int val) {
+	
 }
 
 largeInt::largeInt(int val) {
-	if (val < 0) {
-		_isNeg = true;
-		val = -val;
-	}
-	_num = new vector<unsigned char>();
-	inputing(_num, val);
+	_num = new vector<char>();
+	do {
+		_num->push_back((unsigned char)(val & 0xFF));
+		val >>= 8;
+	} while (val && ~val); // if val only have 1 kind of bit, the loop breaks
+	if ((_num->back() ^ val) & 0x80) _num->push_back(val & 0xFF);
 }
 largeInt::largeInt(unsigned int val) {
-	_num = new vector<unsigned char>();
-	inputing(_num, val);
-}
-largeInt::largeInt(vector<unsigned char>& a) {
-	_isNeg = false;
-	_num = new vector<unsigned char>(a);
-	while (!_num->back()) _num->pop_back();
+	_num = new vector<char>();
+	do {
+		_num->push_back((unsigned char)(val & 0xFF));
+		val >>= 8;
+	} while (val);
+	if (_num->back() & 0x80) _num->push_back(0);
 }
 
 void largeInt::setNum(int val) {
 	_num->clear();
-	if (val < 0) {
-		_isNeg = true;
-		val = -val;
-	}
-	inputing(_num, val);
-	_isNeg = false;
+	do {
+		_num->push_back((unsigned char)(val & 0xFF));
+		val >>= 8;
+	} while (val && ~val); // if val only have 1 kind of bit, the loop breaks
+	if ((_num->back() ^ val) & 0x80) _num->push_back(val & 0xFF);
 }
 void largeInt::setNum(unsigned int val) {
 	_num->clear();
-	inputing(_num, val);
-	_isNeg = false;
+	do {
+		_num->push_back((unsigned char)(val & 0xFF));
+		val >>= 8;
+	} while (val);
+	if (_num->back() & 0x80) _num->push_back(0);
 }
-void largeInt::setNum(vector<unsigned char>& a) {
-	_isNeg = false;
-	_num->assign(a.begin(), a.end());
-	while (!_num->back()) _num->pop_back();
+void largeInt::setNum(vector<char>& a) {
+	vector<char>::iterator j = a.end();
+	while (j != a.begin() && !(*j && ~(*j))) {
+		vector<char>::iterator i = j; i--;
+		if ((*i ^ *j) & 0x80) break;
+		j--;
+	}
+	_num->assign(a.begin(), j);
 }
 
 bool largeInt::operator>(largeInt& a) {
-	if (_isNeg ^ a.getIsNeg()) return !_isNeg;
+	vector<char>* otherVal = a.getNum();
+	if ((_num->back() ^ otherVal->back()) & 0x80) return !(_num->back() & 0x80);
 
-	vector<unsigned char>* rightVal = a.getNum();
 	size_t sz = _num->size();
-	if (sz > rightVal->size()) return !_isNeg;
-	if (sz < rightVal->size()) return _isNeg;
-	if (!sz) return false;
-	sz--;
-	while (sz >= 0) {
-		if (_num->at(sz) > rightVal->at(sz)) return !_isNeg;
-		if (_num->at(sz) < rightVal->at(sz)) return _isNeg;
-		sz--;
+	if (sz > otherVal->size()) return !(_num->back() & 0x80);
+	if (sz < otherVal->size()) return (_num->back() & 0x80);
+	vector<char>::iterator i = _num->end(), j = otherVal->end(), beg = _num->begin();
+	i--; j--;
+	while (i != beg) {
+		if (*i > *j) return true;
+		if (*i < *j) return false;
+		i--; j--;
 	}
-	return false;
+	return (*i > *j);
 }
 bool largeInt::operator==(largeInt& a) {
-	if (_isNeg != a.getIsNeg()) return false;
+	vector<char>* otherVal = a.getNum();
 	size_t sz = _num->size();
-	vector<unsigned char>* otherVal = a.getNum();
 	if (sz != otherVal->size()) return false;
-	if (!sz) return true;
-	sz--;
-	while (sz >= 0) {
-		if (_num->at(sz) != otherVal->at(sz)) return false;
-		sz--;
+	vector<char>::iterator i = _num->begin(), j = otherVal->begin(),
+	end = _num->end();
+	while (i != end) {
+		if (*i != *j) return false;
+		i++; j++;
 	}
 	return true;
 }

@@ -5,23 +5,19 @@ using namespace std;
 
 class largeInt {
 private:
-	bool _isNeg;
-	vector<unsigned char>* _num;
+	vector<char>* _num;
 public:
-	largeInt() : _isNeg(false), _num(new vector<unsigned char>()) {};
+	largeInt() : _num(new vector<char>()) {};
 	largeInt(int);
 	largeInt(unsigned int);
-	largeInt(vector<unsigned char>&);
+	largeInt(vector<char>& a) : _num(new vector<char>(a)) {};
 	~largeInt() { _num->clear(); delete _num; }
 
-	vector<unsigned char>* getNum() { return _num; }
+	vector<char>* getNum() { return _num; }
 	void setNum(int);
 	void setNum(unsigned int);
-	void setNum(vector<unsigned char>&);
+	void setNum(vector<char>&);
 	
-	bool getIsNeg() { return _isNeg; }
-	void setIsNeg(bool a) { _isNeg = a; }
-
 	bool operator>(largeInt&);
 	bool operator==(largeInt&);
 

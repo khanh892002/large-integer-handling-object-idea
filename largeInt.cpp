@@ -1,7 +1,4 @@
 #include "largeInt.h"
-void inputing(vector<char>*& a, int val) {
-	
-}
 
 largeInt::largeInt(int val) {
 	_num = new vector<char>();
@@ -75,50 +72,33 @@ bool largeInt::operator==(largeInt& a) {
 	return true;
 }
 
-void largeInt::operator+=(largeInt& a) {
-	vector<unsigned char>* Aval = a.getNum();
-	if (Aval->size()) {
-		if (_isNeg ^ a.getIsNeg()) {
-			// |_num| < |a|: flip sign, switch _num and a, subtract a
-			// |_num| > |a|: not need to flip sign, just subtract a
-			// |_num| = |a|: subtract a, switch sign of _num if isNeg is true ???
-			if (_num->size() > Aval->size()) {
-				
-			} else if (_num->size() < Aval->size()){
 
-			} else {
-				size_t sz = _num->size();
-				
-			}
-		} else {
-			short temp = 0;
-			size_t i = 0;
-			while (i < Aval->size() && i < _num->size()) {
-				temp += _num->at(i) + Aval->at(i);
-				_num->at(i) = temp;
-				temp >>= 8;
-				i++;
-			}
-			while (i < Aval->size()) {
-				temp += Aval->at(i);
-				_num->push_back(temp);
-				temp >>= 8;
-				i++;
-			}
-			while (i < _num->size() && temp) {
-				temp += _num->at(i);
-				_num->at(i) = temp;
-				temp >>= 8;
-				i++;
-			}
-			if (temp) _num->push_back(1);
-		}
+void largeInt::operator+=(largeInt& a) {
+	vector<char>* Aval = a.getNum();
+	vector<char>::iterator i(_num->begin()), i_end(_num->end()),
+						j(Aval->begin()), j_end(Aval->end());
+	short temp = 0;
+	while (i != i_end && j != j_end) {
+		temp += (*i & 0xFF) + (*j & 0xFF);
+		*i = temp & 0xFF;
+		temp >>= 8;
+		i++; j++;
+	}
+	// this still more work on what actually need to be handled
+	// if _num is positive, if _num is negative
+	// if both the numbers are positive, it would've been easy
+	// when both numbers are negative, is it handled similar to the positive case
+	// and when the signs are not the same
+	while (i != i_end && temp) {
+		if (++*i) temp = 0;
+		i++;
+	}
+	while (j != j_end) {
+
 	}
 }
 void largeInt::operator-=(largeInt& a) {
-	a.setIsNeg(!(a.getIsNeg()));
-	*this += a;
-	a.setIsNeg(!(a.getIsNeg()));
+	
 }
 
 largeInt largeInt::operator+(largeInt& a) {

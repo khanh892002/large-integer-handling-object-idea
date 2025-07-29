@@ -34,9 +34,9 @@ void largeInt::setNum(unsigned int val) {
 	if (_num->back() & 0x80) _num->push_back(0);
 }
 void largeInt::setNum(vector<char>& a) {
-	vector<char>::iterator j = a.end();
+	numItr j = a.end();
 	while (j != a.begin() && !(*j && ~(*j))) {
-		vector<char>::iterator i = j; i--;
+		numItr i = j; i--;
 		if ((*i ^ *j) & 0x80) break;
 		j--;
 	}
@@ -50,7 +50,7 @@ bool largeInt::operator>(largeInt& a) {
 	size_t sz = _num->size();
 	if (sz > otherVal->size()) return !(_num->back() & 0x80);
 	if (sz < otherVal->size()) return (_num->back() & 0x80);
-	vector<char>::iterator i = _num->end(), j = otherVal->end(), beg = _num->begin();
+	numItr i = _num->end(), j = otherVal->end(), beg = _num->begin();
 	i--; j--;
 	while (i != beg) {
 		if (*i > *j) return true;
@@ -63,7 +63,7 @@ bool largeInt::operator==(largeInt& a) {
 	vector<char>* otherVal = a.getNum();
 	size_t sz = _num->size();
 	if (sz != otherVal->size()) return false;
-	vector<char>::iterator i = _num->begin(), j = otherVal->begin(),
+	numItr i = _num->begin(), j = otherVal->begin(),
 	end = _num->end();
 	while (i != end) {
 		if (*i != *j) return false;
@@ -72,35 +72,43 @@ bool largeInt::operator==(largeInt& a) {
 	return true;
 }
 
-
 void largeInt::operator+=(largeInt& a) {
 	vector<char>* Aval = a.getNum();
-	vector<char>::iterator i(_num->begin()), i_end(_num->end()),
-						j(Aval->begin()), j_end(Aval->end());
+	while (_num->size() < Aval->size())
+		_num->push_back(_num->back() >> 7);
+	numItr i(_num->begin()), i_end(_num->end()),
+			j(Aval->begin()), j_end(Aval->end());
 	short temp = 0;
-	while (i != i_end && j != j_end) {
+	while (j != j_end) {
 		temp += (*i & 0xFF) + (*j & 0xFF);
 		*i = temp & 0xFF;
 		temp >>= 8;
 		i++; j++;
 	}
-	// this still more work on what actually need to be handled
-	// if _num is positive, if _num is negative
-	// if both the numbers are positive, it would've been easy
-	// when both numbers are negative, is it handled similar to the positive case
-	// and when the signs are not the same
 	while (i != i_end && temp) {
-		if (++*i) temp = 0;
+		if (++(*i)) temp = 0;
 		i++;
 	}
-	while (j != j_end) {
-
+	i_end--;
+	while ((i_end != _num->begin()) && !(*i_end && ~*i_end)) {
+		i = i_end; i--;
+		if ((*i ^ *i_end) & 0x80) break;
+		i_end = i;
+		_num->pop_back();
 	}
 }
-void largeInt::operator-=(largeInt& a) {
-	
-}
+void largeInt::operator-=(largeInt& a) { *this += -a; }
 
+largeInt largeInt::operator-() {
+	vector<char> res(*_num);
+	numItr i = res.begin();
+	while (i != res.end()) {
+		*i = ~*i;
+		i++;
+	}
+	return largeInt(res) + 1;
+	// this create another largeInt for 1, hopefully a good approach
+}
 largeInt largeInt::operator+(largeInt& a) {
 	largeInt res(*this);
 	res += a;
@@ -112,9 +120,9 @@ largeInt largeInt::operator-(largeInt& a) {
 	return res;
 }
 largeInt largeInt::operator*(largeInt& a) {
-	largeInt res;
+	vector<char> res;
 	
-	return res;
+	return largeInt(res);
 }
 largeInt largeInt::operator/(largeInt& a) {
 	largeInt res;

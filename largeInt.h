@@ -3,6 +3,8 @@
 #include <vector>
 using namespace std;
 
+#define numItr vector<char>::iterator
+
 class largeInt {
 private:
 	vector<char>* _num;
@@ -23,6 +25,8 @@ public:
 
 	void operator+=(largeInt&);
 	void operator-=(largeInt&);
+
+	largeInt operator-();
 	largeInt operator+(largeInt&);
 	largeInt operator-(largeInt&);
 	largeInt operator*(largeInt&);

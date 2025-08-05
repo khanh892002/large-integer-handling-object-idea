@@ -1,7 +1,7 @@
 #include "largeInt.h"
 
 largeInt::largeInt(int val) {
-	_num = new vector<char>();
+	_num = new list<char>();
 	do {
 		_num->push_back((unsigned char)(val & 0xFF));
 		val >>= 8;
@@ -9,7 +9,7 @@ largeInt::largeInt(int val) {
 	if ((_num->back() ^ val) & 0x80) _num->push_back(val & 0xFF);
 }
 largeInt::largeInt(unsigned int val) {
-	_num = new vector<char>();
+	_num = new list<char>();
 	do {
 		_num->push_back((unsigned char)(val & 0xFF));
 		val >>= 8;
@@ -33,7 +33,7 @@ void largeInt::setNum(unsigned int val) {
 	} while (val);
 	if (_num->back() & 0x80) _num->push_back(0);
 }
-void largeInt::setNum(vector<char>& a) {
+void largeInt::setNum(list<char>& a) {
 	numItr j = a.end();
 	while (j != a.begin() && !(*j && ~(*j))) {
 		numItr i = j; i--;
@@ -44,7 +44,7 @@ void largeInt::setNum(vector<char>& a) {
 }
 
 bool largeInt::operator>(largeInt& a) {
-	vector<char>* otherVal = a.getNum();
+	list<char>* otherVal = a.getNum();
 	if ((_num->back() ^ otherVal->back()) & 0x80) return !(_num->back() & 0x80);
 
 	size_t sz = _num->size();
@@ -60,7 +60,7 @@ bool largeInt::operator>(largeInt& a) {
 	return (*i > *j);
 }
 bool largeInt::operator==(largeInt& a) {
-	vector<char>* otherVal = a.getNum();
+	list<char>* otherVal = a.getNum();
 	size_t sz = _num->size();
 	if (sz != otherVal->size()) return false;
 	numItr i = _num->begin(), j = otherVal->begin(),
@@ -72,8 +72,28 @@ bool largeInt::operator==(largeInt& a) {
 	return true;
 }
 
+void largeInt::operator>>(unsigned int a) {
+	while(a & ~7) {
+		_num->pop_front();
+		a -= 8;
+	}
+	if (a) {
+		numItr i = _num->begin(), j = i; j++;
+		while (j != _num->end()) {
+			*i = (*j << (8 - a)) | (*i >> a);
+			i = j; j++;
+		}
+		*i >>= a;
+		if ((*i && ~*i) && !((*i ^ *(--i)) & 0x80))
+			_num->pop_back();
+	}
+}
+void largeInt::operator<<(unsigned int a) {
+
+}
+
 void largeInt::operator+=(largeInt& a) {
-	vector<char>* Aval = a.getNum();
+	list<char>* Aval = a.getNum();
 	while (_num->size() < Aval->size())
 		_num->push_back(_num->back() >> 7);
 	numItr i(_num->begin()), i_end(_num->end()),
@@ -100,13 +120,15 @@ void largeInt::operator+=(largeInt& a) {
 void largeInt::operator-=(largeInt& a) { *this += -a; }
 
 largeInt largeInt::operator-() {
-	vector<char> res(*_num);
+	list<char> res(*_num);
 	numItr i = res.begin();
 	while (i != res.end()) {
 		*i = ~*i;
 		i++;
 	}
-	return largeInt(res) + 1;
+	largeInt result(res);
+	result += 1;
+	return result;
 	// this create another largeInt for 1, hopefully a good approach
 }
 largeInt largeInt::operator+(largeInt& a) {
@@ -120,7 +142,7 @@ largeInt largeInt::operator-(largeInt& a) {
 	return res;
 }
 largeInt largeInt::operator*(largeInt& a) {
-	vector<char> res;
+	list<char> res;
 	
 	return largeInt(res);
 }

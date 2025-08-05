@@ -1,27 +1,30 @@
 #pragma once
 #include <iostream>
-#include <vector>
+#include <list>
 using namespace std;
 
-#define numItr vector<char>::iterator
+#define numItr list<char>::iterator
 
 class largeInt {
 private:
-	vector<char>* _num;
+	list<char>* _num;
 public:
-	largeInt() : _num(new vector<char>()) {};
+	largeInt() : _num(new list<char>()) {};
 	largeInt(int);
 	largeInt(unsigned int);
-	largeInt(vector<char>& a) : _num(new vector<char>(a)) {};
+	largeInt(list<char>& a) : _num(new list<char>(a)) {};
 	~largeInt() { _num->clear(); delete _num; }
 
-	vector<char>* getNum() { return _num; }
+	list<char>* getNum() { return _num; }
 	void setNum(int);
 	void setNum(unsigned int);
-	void setNum(vector<char>&);
+	void setNum(list<char>&);
 	
 	bool operator>(largeInt&);
 	bool operator==(largeInt&);
+
+	void operator>>(unsigned int);
+	void operator<<(unsigned int);
 
 	void operator+=(largeInt&);
 	void operator-=(largeInt&);

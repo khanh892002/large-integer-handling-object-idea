@@ -7,3 +7,5 @@ Sinh khóa sẽ yêu cầu người dùng nhập giá trị tối thiểu cho 2 
 thao tác mã hóa và giải mã sử dụng chung một hàm crypting. Hàm này lấy tham số là chuỗi "encrypt" hoặc "decrypt", chương trình sẽ yêu cầu người dùng nhập tên file cần mã hóa/giải mã và xác định giá trị số nguyên của toàn bộ nội dung file. Nếu giá trị này lớn hơn N thì file không được giải mã/mã hóa. Ngược lại, chương trình sẽ tiếp tục thực hiện việc mã hóa/giải mã. Tùy vào tham số chuỗi nhập vào hàm mà chương trình sẽ chọn số mũ e hoặc d để mã hóa/giải mã nội dung file nhập. Chương trình sử dụng hàm powerMod để tính giá trị của đã qua mã hóa/giải mã và lưu giá trị vừa tính được dưới dạng chuỗi ký tự vào một file mới có tên là tên của file nhập dữ liệu cộng thêm chuỗi tham số nhập vào hàm crypting. Nếu file xuất kết quả không mở được thì chương trình sẽ báo lỗi và kết thúc quá trình chạy hàm
 
 để chạy thì cần dùng giao diện developer prompt và dùng cl để chạy: cl main.cpp largeInt.cpp -o ./main.exe
+
+do sử dụng string kém hiệu quả về tốc độ và lưu trữ, nên đối tượng số nguyên lớn dưới dạng list<char> đang được thiết kế trong branch main.

@@ -23,8 +23,8 @@ public:
 	bool operator>(largeInt&);
 	bool operator==(largeInt&);
 
-	void operator>>(unsigned int);
-	void operator<<(unsigned int);
+	void operator>>=(unsigned int);
+	void operator<<=(unsigned int);
 
 	void operator+=(largeInt&);
 	void operator-=(largeInt&);
@@ -36,8 +36,8 @@ public:
 	largeInt operator/(largeInt&);
 	largeInt operator%(largeInt&);
 
-	void operator+=(int a);
-	void operator-=(int a);
+	void operator+=(int a) { *this += largeInt(a) };
+	void operator-=(int a) { *this += largeInt(-a) };
 	largeInt operator+(int a) { return largeInt(*this) + largeInt(a); }
 	largeInt operator-(int a) { return largeInt(*this) - largeInt(a); }
 	largeInt operator*(int a) { return largeInt(*this) * largeInt(a); }

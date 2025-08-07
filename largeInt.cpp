@@ -72,24 +72,49 @@ bool largeInt::operator==(largeInt& a) {
 	return true;
 }
 
-void largeInt::operator>>(unsigned int a) {
-	while(a & ~7) {
+void largeInt::operator>>=(unsigned int a) {
+	numItr i = _num->end(); i--;
+	while ((a >> 3) && (i != _num->begin())) {
 		_num->pop_front();
 		a -= 8;
 	}
-	if (a) {
-		numItr i = _num->begin(), j = i; j++;
-		while (j != _num->end()) {
-			*i = (*j << (8 - a)) | (*i >> a);
-			i = j; j++;
-		}
-		*i >>= a;
-		if ((*i && ~*i) && !((*i ^ *(--i)) & 0x80))
-			_num->pop_back();
+	// after this, if a > 8 => _num->size = 1
+	if (a > 8) { *i >>= 7; return; }
+	i = _num->begin();
+	numItr j = i; j++;
+	char moveLeft = 8 - a;
+	while (j != _num->end()) {
+		*i = (*j << moveLeft) | ((unsigned char)(*i) >> a);
+		i = j; j++;
 	}
+	*i >>= a;
+	if ((_num->size() > 1) && (*i && ~*i) && !((*i ^ *(--i)) & 0x80))
+		_num->pop_back();
 }
-void largeInt::operator<<(unsigned int a) {
-
+void largeInt::operator<<=(unsigned int a) {
+	char Nbits = a & 7;
+	numItr i = --_num->end();
+	char temp = *i ^ (*i << 1);
+	while (Nbits && !(temp & 0x80)) {
+		temp <<= 1;
+		Nbits--;
+	}
+	if (Nbits) _num->push_back(*i >> (8 - (a & 7)));
+	Nbits = a & 7; temp = 8 - Nbits;
+	if (i == _num->begin()) *i <<= Nbits;
+	else {
+		numItr j = i; j--;
+		while (j != _num->begin()) {
+			*i = (*i << Nbits) | ((unsigned char)(*j) >> temp);
+			i = j; j--;
+		}
+		*j <<= Nbits;
+	}
+	a >>= 3;
+	while (a) {
+		_num->push_front(0);
+		a--;
+	}
 }
 
 void largeInt::operator+=(largeInt& a) {

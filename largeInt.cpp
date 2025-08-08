@@ -93,7 +93,7 @@ void largeInt::operator>>=(unsigned int a) {
 }
 void largeInt::operator<<=(unsigned int a) {
 	char Nbits = a & 7;
-	numItr i = --_num->end();
+	numItr i = --(_num->end());
 	char temp = *i ^ (*i << 1);
 	while (Nbits && !(temp & 0x80)) {
 		temp <<= 1;
@@ -151,7 +151,7 @@ void largeInt::operator%=(largeInt& a) {
 			*i = ~*i;
 		a += 1;
 	}
-	largeInt temp(*(a.getNum()));
+	largeInt temp(a);
 	if (*this < zero) {
 		for (numItr i = _num->begin(); i != _num->end(); i++)
 			*i = ~*i;
@@ -161,7 +161,7 @@ void largeInt::operator%=(largeInt& a) {
 		temp -= *this;
 		this->setNum(*(temp.getNum()));
 	}
-	temp.setNum(*(a.getNum()));
+	temp.setNum(a);
 	while (temp < *this) temp <<= 1;
 	while (*this >= a) {
 		while (temp > *this) temp >>= 1;
@@ -175,29 +175,128 @@ void largeInt::operator%=(largeInt& a) {
 }
 
 largeInt largeInt::operator-() {
-	list<char> res(*_num);
-	numItr i = res.begin();
-	while (i != res.end()) {
+	largeInt res(*_num);
+	numItr i_end = res.getNum()->end();
+	for (numItr i = res.getNum()->begin(); i != i_end; i++)
 		*i = ~*i;
-		i++;
-	}
-	largeInt result(res);
-	result += 1;
-	return result;
-	// this create another largeInt for 1, hopefully a good approach
+	res += 1;
+	return res;
 }
 largeInt largeInt::operator+(largeInt& a) {
-	largeInt res(*this);
+	largeInt res(*_num);
 	res += a;
 	return res;
 }
 largeInt largeInt::operator-(largeInt& a) {
-	largeInt res(*this);
+	largeInt res(*_num);
 	res -= a;
 	return res;
 }
 largeInt largeInt::operator*(largeInt& a) {
-	list<char> res;
+	if (*this == zero || a == zero) return zero;
+	// use simple multiplication for small number
+	if (_num->size() <= 4 && a.getNum()->size() <= 4) return karatsuba_simple(*this, a);
+	// Use Karatsuba algorithm for larger numbers
+	return karatsuba_multiply(*this, a);
+}
+
+largeInt largeInt::karatsuba_simple(largeInt& a, largeInt& b) {
+	list<char>* aNum = a.getNum(), *bNum = b.getNum();
+	// Create result with enough space
+	list<char> result(aNum->size() + bNum->size(), 0);
+	
+	// Simple schoolbook multiplication
+	int carry = 0, aPos = 0;
+	
+	for (numItr aIt = aNum->begin(); aIt != aNum->end(); ++aIt, ++aPos) {
+		carry = 0;
+		int bPos = 0;
+		
+		for (numItr bIt = bNum->begin(); bIt != bNum->end(); ++bIt, ++bPos) {
+			int product = *aIt * *bIt + carry;
+			
+			// Add to existing result
+			auto resultIt = result.begin();
+			advance(resultIt, aPos + bPos);
+			product += *resultIt;
+			
+			*resultIt = product & 0xFF;
+			carry = product >> 8;
+		}
+		
+		// Handle remaining carry
+		if (carry > 0) {
+			auto resultIt = result.begin();
+			advance(resultIt, aPos + bPos);
+			*resultIt = carry;
+		}
+	}
+	
+	// Remove leading zeros
+	while (result.size() > 1 && result.back() == 0) {
+		result.pop_back();
+	}
+	
+	return largeInt(result);
+}
+
+largeInt largeInt::karatsuba_multiply(largeInt& a, largeInt& b) {
+	list<char>* aNum = a.getNum(), *bNum = b.getNum();
+	
+	size_t aSize = aNum->size(), bSize = bNum->size();
+	
+	if (aSize < bSize) return karatsuba_multiply(b, a);
+	if (aSize <= 4) return karatsuba_simple(a, b);
+	size_t split = aSize >> 1;
+	
+	// Split a into high and low parts
+	list<char> aHigh, aLow;
+	numItr aIt = aNum->begin();
+	for (size_t i = 0; i < split && aIt != aNum->end(); ++i, ++aIt) {
+		aLow.push_back(*aIt);
+	}
+	while (aIt != aNum->end()) {
+		aHigh.push_back(*aIt);
+		aIt++;
+	}
+	
+	// Split b into high and low parts
+	list<char> bHigh, bLow;
+	auto bIt = bNum->begin();
+	for (size_t i = 0; i < split && bIt != bNum->end(); ++i, ++bIt) {
+		bLow.push_back(*bIt);
+	}
+	for (; bIt != bNum->end(); ++bIt) {
+		bHigh.push_back(*bIt);
+	}
+	
+	// Create largeInt objects for the parts
+	largeInt aHighInt(aHigh);
+	largeInt aLowInt(aLow);
+	largeInt bHighInt(bHigh);
+	largeInt bLowInt(bLow);
+	
+	// Karatsuba's three recursive multiplications
+	largeInt z0(aLowInt * bLowInt);
+	largeInt z2(aHighInt * bHighInt);
+	
+	// (a_high + a_low) * (b_high + b_low) - z0 - z2
+	largeInt sumA(aHighInt + aLowInt);
+	largeInt sumB(bHighInt + bLowInt);
+	largeInt z1(sumA * sumB - z0 - z2);
+	
+	// Combine results: z2 * 2^(2*split) + z1 * 2^split + z0
+	largeInt result(z0);
+	
+	// Add z1 * 2^split
+	largeInt z1Shifted(z1);
+	z1Shifted <<= (split << 3);
+	result += z1Shifted;
+	
+	// Add z2 * 2^(2*split)
+	largeInt z2Shifted(z2);
+	z2Shifted <<= (2 * split * 8);
+	result += z2Shifted;
 	
 	return result;
 }
@@ -207,7 +306,7 @@ largeInt largeInt::operator/(largeInt& a) {
 	return res;
 }
 largeInt largeInt::operator%(largeInt& a) {
-	largeInt res(*this);
+	largeInt res(*_num);
 	res %= a;
 	return res;
 }

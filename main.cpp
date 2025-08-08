@@ -3,20 +3,10 @@
 
 largeInt N, phiN, e, d, one(1);
 
-vector<bool> binaryBool(largeInt n) {
-	vector<bool> result;
-	while (n.getNum() != "0") {
-		if ((n % 2).getNum() == "1") result.push_back(true);
-		else result.push_back(false);
-		n = n / 2;
-	}
-	return result;
-}
-
 bool inUsedList(vector<largeInt>& list, largeInt& a) {
 	int size = list.size();
 	for (int i = 0; i < size; i++)
-		if (a.getNum() == list[i].getNum())
+		if (a == list[i])
 			return true;
 
 	return false;
@@ -26,23 +16,34 @@ largeInt random(largeInt& a) {
 	// assume a is positive
 	// this function return a random number smaller than a
 	largeInt result;
-	list<char>* num = a.getNum();
+	list<char>* num = a.getNum(), *res = result.getNum();
 	size_t sz = (rand() % num->size()) + 1;
+	int temp;
 	while (sz >> 2) {
-
+		temp = rand();
+		res->push_back(temp & 0xFF); temp >>= 8;
+		res->push_back(temp & 0xFF); temp >>= 8;
+		res->push_back(temp & 0xFF); temp >>= 8;
+		res->push_back(temp & 0xFF);
 		sz -= 4;
 	}
+	temp = rand();
 	while (sz) {
-
+		res->push_back(temp & 0xFF);
+		temp >>= 8;
+		sz--;
 	}
-	return result % a;
+	if (!((*(--(--res->end()))) & 0x80)) res->pop_back();
+	// if num is 00000000 0...
+	result %= a;
+	return result;
 }
 
 bool FermatTest(largeInt n, int k) {
-	largeInt mu = n - 1;
-	list<char>* muLi(mu.getNum());
+	largeInt mu(n - 1);
+	list<char>* muLi = mu.getNum();
 	vector<largeInt> usedNums;
-	int count = 0, size = binMu.size();
+	int count = 0;
 	while (count < k) {
 		largeInt a;
 		do {
@@ -52,12 +53,21 @@ bool FermatTest(largeInt n, int k) {
 		usedNums.push_back(a);
 
 		largeInt power(1);
-		while (mu != zero)
-			if () power = (power * power * a) % n;
-			else power = (power * power) % n;
-
+		numItr i = --(muLi->end());
+		while (i != muLi->begin()) {
+			for (unsigned char bit(0x80); bit; bit>>=1)
+				power.setNum(*(
+					(((*i & bit) ? power * power * a : power * power) % n)
+					.getNum()
+				));
+			i--;
+		}
+		for (unsigned char bit(0x80); bit; bit>>=1)
+			power.setNum(*(
+				(((*i & bit) ? power * power * a : power * power) % n)
+				.getNum()
+			));
 		if (power != one) return false;
-
 		count++;
 	}
 
@@ -77,15 +87,23 @@ int decompose(largeInt a) {
 	return count;
 }
 
-largeInt powerMod(largeInt a, largeInt b, largeInt n) {
-	vector<bool> binMu(binaryBool(b));
-	largeInt result("1");
-	int i = binMu.size() - 1;
-	while (i >= 0) {
-		if (binMu[i]) result = (result * result * a) % n;
-		else result = (result * result) % n;
+largeInt powerMod(largeInt& a, largeInt& b, largeInt& n) {
+	largeInt result(1);
+	list<char>* bNum = b.getNum();
+	numItr i = --(bNum->end());
+	while (i != bNum->begin()) {
+		for (unsigned char bit(0x80); bit; bit>>=1)
+			result.setNum(*(
+				(((*i & bit) ? result * result * a : result * result) % n)
+				.getNum()
+			));
 		i--;
 	}
+	for (unsigned char bit(0x80); bit; bit>>=1)
+		result.setNum(*(
+			(((*i & bit) ? result * result * a : result * result) % n)
+			.getNum()
+		));
 	return result;
 }
 
@@ -123,20 +141,22 @@ bool MillerRabinTest(largeInt n, int k) {
 	int i = 0;
 	while (i < k) {
 		do {
-			a.setNum(random(n - 2)); a = a + 2;
+			a.setNum(*(random(n - 2).getNum()));
+			a = a + 2;
 		} while (inUsedList(arr, a));
 		arr.push_back(a);
-		if (gcd(a, n).getNum() != "1") return false;
-		else if (powerMod(a, n - 1, n).getNum() != "1") return false;
+		if (gcd(a, n) != one) return false;
+		else if (powerMod(a, n - 1, n) != one) return false;
 		else return Witness(a, n);
 		i++;
 	}
 	return true;
 }
 
-largeInt nghichDao(largeInt& a, largeInt& p) {//mac dinh gcd(a, n) = 1
+largeInt nghichDao(largeInt& a, largeInt& p) {
+	// assume gcd(a, n) = 1
 	vector<largeInt> arr;
-	largeInt a1(a.getNum()), p1(p.getNum());
+	largeInt a1(a), p1(*(p.getNum()));
 	while (a1.getNum() != "1") {
 		arr.push_back(largeInt("-1") * (p1 / a1));
 		string temp = (p1 % a1).getNum();

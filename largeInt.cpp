@@ -34,13 +34,13 @@ void largeInt::setNum(unsigned int val) {
 	if (_num->back() & 0x80) _num->push_back(0);
 }
 void largeInt::setNum(list<char>& a) {
-	numItr j = a.end();
+	numItr j = --(a.end());
 	while (j != a.begin() && !(*j && ~(*j))) {
 		numItr i = j; i--;
 		if ((*i ^ *j) & 0x80) break;
 		j--;
 	}
-	_num->assign(a.begin(), j);
+	_num->assign(a.begin(), ((j == a.begin()) ? ++j : j));
 }
 
 bool largeInt::operator>(largeInt& a) {
@@ -143,6 +143,36 @@ void largeInt::operator+=(largeInt& a) {
 	}
 }
 void largeInt::operator-=(largeInt& a) { *this += -a; }
+void largeInt::operator%=(largeInt& a) {
+	if (a == zero) return;
+	bool isNeg = a < zero;
+	if (isNeg) {
+		for (numItr i = a.getNum()->begin(); i != a.getNum()->end(); i++)
+			*i = ~*i;
+		a += 1;
+	}
+	largeInt temp(*(a.getNum()));
+	if (*this < zero) {
+		for (numItr i = _num->begin(); i != _num->end(); i++)
+			*i = ~*i;
+		*this += 1;
+
+		while (temp < *this) temp <<= 1;
+		temp -= *this;
+		this->setNum(*(temp.getNum()));
+	}
+	temp.setNum(*(a.getNum()));
+	while (temp < *this) temp <<= 1;
+	while (*this >= a) {
+		while (temp > *this) temp >>= 1;
+		*this -= temp;
+	}
+	if (isNeg) {
+		for (numItr i = a.getNum()->begin(); i != a.getNum()->end(); i++)
+			*i = ~*i;
+		a += 1;
+	}
+}
 
 largeInt largeInt::operator-() {
 	list<char> res(*_num);
@@ -169,7 +199,7 @@ largeInt largeInt::operator-(largeInt& a) {
 largeInt largeInt::operator*(largeInt& a) {
 	list<char> res;
 	
-	return largeInt(res);
+	return result;
 }
 largeInt largeInt::operator/(largeInt& a) {
 	largeInt res;
@@ -177,7 +207,7 @@ largeInt largeInt::operator/(largeInt& a) {
 	return res;
 }
 largeInt largeInt::operator%(largeInt& a) {
-	largeInt res;
-	
+	largeInt res(*this);
+	res %= a;
 	return res;
 }

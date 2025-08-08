@@ -3,16 +3,18 @@
 #include <list>
 using namespace std;
 
+largeInt zero(0);
+
 #define numItr list<char>::iterator
 
 class largeInt {
 private:
 	list<char>* _num;
 public:
-	largeInt() : _num(new list<char>()) {};
+	largeInt() : _num(new list<char>(1, 0)) {};
 	largeInt(int);
 	largeInt(unsigned int);
-	largeInt(list<char>& a) : _num(new list<char>(a)) {};
+	largeInt(list<char>& a) : _num(a.size() ? new list<char>(a) : new list<char>(1, 0)) {};
 	~largeInt() { _num->clear(); delete _num; }
 
 	list<char>* getNum() { return _num; }
@@ -21,13 +23,17 @@ public:
 	void setNum(list<char>&);
 	
 	bool operator>(largeInt&);
+	bool operator<(largeInt& a) { return a > *this; }
 	bool operator==(largeInt&);
+	bool operator>=(largeInt& a) { return (*this > a) || (*this == a); }
+	bool operator!=(largeInt& a) { return !(*this == a); }
 
 	void operator>>=(unsigned int);
 	void operator<<=(unsigned int);
 
 	void operator+=(largeInt&);
 	void operator-=(largeInt&);
+	void operator%=(largeInt&);
 
 	largeInt operator-();
 	largeInt operator+(largeInt&);
@@ -36,8 +42,8 @@ public:
 	largeInt operator/(largeInt&);
 	largeInt operator%(largeInt&);
 
-	void operator+=(int a) { *this += largeInt(a) };
-	void operator-=(int a) { *this += largeInt(-a) };
+	void operator+=(int a) { *this += largeInt(a); }
+	void operator-=(int a) { *this += largeInt(-a); }
 	largeInt operator+(int a) { return largeInt(*this) + largeInt(a); }
 	largeInt operator-(int a) { return largeInt(*this) - largeInt(a); }
 	largeInt operator*(int a) { return largeInt(*this) * largeInt(a); }

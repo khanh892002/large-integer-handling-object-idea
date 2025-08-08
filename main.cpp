@@ -1,8 +1,7 @@
 #include "largeInt.h"
 #include <vector>
-#include <fstream>
 
-largeInt N, phiN, e, d;
+largeInt N, phiN, e, d, one(1);
 
 vector<bool> binaryBool(largeInt n) {
 	vector<bool> result;
@@ -14,7 +13,7 @@ vector<bool> binaryBool(largeInt n) {
 	return result;
 }
 
-bool inUsedList(vector<largeInt>& list, largeInt a) {
+bool inUsedList(vector<largeInt>& list, largeInt& a) {
 	int size = list.size();
 	for (int i = 0; i < size; i++)
 		if (a.getNum() == list[i].getNum())
@@ -23,40 +22,41 @@ bool inUsedList(vector<largeInt>& list, largeInt a) {
 	return false;
 }
 
-string random(largeInt a) {//cho so duong
-	string num = a.getNum(), result = "";
-	int size = num.size();
-	int i = 0;
-	while (i < size) {
-		result += (char)((rand() % (num[i] - 48)) + 48);
-		if (result[i] < num[i++]) break;
+largeInt random(largeInt& a) {
+	// assume a is positive
+	// this function return a random number smaller than a
+	largeInt result;
+	list<char>* num = a.getNum();
+	size_t sz = (rand() % num->size()) + 1;
+	while (sz >> 2) {
+
+		sz -= 4;
 	}
-	while (i < size) {
-		result += (char)((rand() % 10) + 48);
-		i++;
+	while (sz) {
+
 	}
-	return result;
+	return result % a;
 }
 
 bool FermatTest(largeInt n, int k) {
 	largeInt mu = n - 1;
-	vector<bool> binMu(binaryBool(mu));
+	list<char>* muLi(mu.getNum());
 	vector<largeInt> usedNums;
 	int count = 0, size = binMu.size();
 	while (count < k) {
 		largeInt a;
 		do {
-			a.setNum(random(n - 3));
-			a = a + 2;
-		} while (inUsedList(usedNums, largeInt(a)));
+			a.setNum(*(random(n - 3).getNum()));
+			a += 2;
+		} while (inUsedList(usedNums, a));
 		usedNums.push_back(a);
 
 		largeInt power(1);
-		for (int i = size - 1; i >= 0; i--)
-			if (binMu[i]) power = (power * power * a) % n;
+		while (mu != zero)
+			if () power = (power * power * a) % n;
 			else power = (power * power) % n;
 
-		if (power.getNum() != "1") return false;
+		if (power != one) return false;
 
 		count++;
 	}
@@ -111,7 +111,7 @@ bool Witness(largeInt a, largeInt n) {
 }
 
 largeInt gcd(largeInt a, largeInt b) {
-	while (a.getNum() != "0" && b.getNum() != "0")
+	while (!(a == zero) && !(b == zero))
 		if (a > b) a = a % b;
 		else b = b % a;
 	return a + b;

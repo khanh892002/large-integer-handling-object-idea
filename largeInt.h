@@ -16,6 +16,7 @@ public:
 	largeInt(unsigned int);
 	largeInt(list<char>& a) : _num(a.size() ? new list<char>(a) : new list<char>(1, 0)) {};
 	largeInt(largeInt& a) : largeInt(*(a.getNum())) {};
+	largeInt(string&);
 	~largeInt() { _num->clear(); delete _num; }
 
 	list<char>* getNum() { return _num; }
@@ -34,15 +35,17 @@ public:
 	void operator<<=(unsigned int);
 
 	void operator+=(largeInt&);
-	void operator-=(largeInt&);
+	void operator-=(largeInt& a) { *this += -a; };
 	void operator%=(largeInt&);
 
 	largeInt operator-();
-	largeInt operator+(largeInt&);
-	largeInt operator-(largeInt&);
+	largeInt operator+(largeInt& a) { largeInt res(*_num); res += a; return res; };
+	largeInt operator-(largeInt& a) { largeInt res(*_num); res -= a; return res; };
 	largeInt operator*(largeInt&);
 	largeInt operator/(largeInt&);
-	largeInt operator%(largeInt&);
+	largeInt operator%(largeInt& a) { largeInt res(*_num); res %= a; return res; };
+	largeInt operator>>(unsigned int a) { largeInt res(*_num); res >>= a; return res; };
+	largeInt operator<<(unsigned int a) { largeInt res(*_num); res <<= a; return res; };
 
 	void operator+=(int a) { *this += largeInt(a); }
 	void operator-=(int a) { *this += largeInt(-a); }
@@ -54,6 +57,7 @@ public:
 	largeInt operator/(int a) { return largeInt(*this) / largeInt(a); }
 	largeInt operator%(int a) { return largeInt(*this) % largeInt(a); }
 
+	string getStrInt();
 private:
 	largeInt karatsuba_simple(largeInt& a, largeInt& b); // this function is for multiplying with numbers that are no more than 4B
 	largeInt karatsuba_multiply(largeInt& a, largeInt& b); // used in * operator, a is make sure to be larger in size than b in the function

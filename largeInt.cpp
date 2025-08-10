@@ -16,6 +16,12 @@ largeInt::largeInt(unsigned int val) {
 	} while (val);
 	if (_num->back() & 0x80) _num->push_back(0);
 }
+largeInt::largeInt(string& str) {
+	_num = new list<char>();
+	size_t i = 0;
+	while (str[i] != '\0') _num->push_back(str[i++]);
+	if (_num->back() & 0x80) _num->push_back(0);
+}
 
 void largeInt::setNum(int val) {
 	_num->clear();
@@ -142,7 +148,6 @@ void largeInt::operator+=(largeInt& a) {
 		_num->pop_back();
 	}
 }
-void largeInt::operator-=(largeInt& a) { *this += -a; }
 void largeInt::operator%=(largeInt& a) {
 	if (a == zero) return;
 	bool isNeg = a < zero;
@@ -182,16 +187,7 @@ largeInt largeInt::operator-() {
 	res += 1;
 	return res;
 }
-largeInt largeInt::operator+(largeInt& a) {
-	largeInt res(*_num);
-	res += a;
-	return res;
-}
-largeInt largeInt::operator-(largeInt& a) {
-	largeInt res(*_num);
-	res -= a;
-	return res;
-}
+
 largeInt largeInt::operator*(largeInt& a) {
 	if (*this == zero || a == zero) return zero;
 	// use simple multiplication for small number
@@ -303,10 +299,5 @@ largeInt largeInt::karatsuba_multiply(largeInt& a, largeInt& b) {
 largeInt largeInt::operator/(largeInt& a) {
 	largeInt res;
 	
-	return res;
-}
-largeInt largeInt::operator%(largeInt& a) {
-	largeInt res(*_num);
-	res %= a;
 	return res;
 }

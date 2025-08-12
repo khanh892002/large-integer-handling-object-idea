@@ -1,5 +1,6 @@
 #include "largeInt.h"
 #include <vector>
+#include <string>
 
 largeInt N, phiN, e, d, one(1);
 
@@ -16,7 +17,7 @@ largeInt random(largeInt& a) {
 	// assume a is positive
 	// this function return a random number smaller than a
 	largeInt result;
-	list<char>* num = a.getNum(), *res = result.getNum();
+	numLi* num = a.getNum(), *res = result.getNum();
 	size_t sz = (rand() % num->size()) + 1;
 	int temp;
 	while (sz >> 2) {
@@ -41,7 +42,7 @@ largeInt random(largeInt& a) {
 
 bool FermatTest(largeInt n, int k) {
 	largeInt mu(n - 1);
-	list<char>* muLi = mu.getNum();
+	numLi* muLi = mu.getNum();
 	vector<largeInt> usedNums;
 	int count = 0;
 	while (count < k) {
@@ -89,7 +90,7 @@ int decompose(largeInt a) {
 
 largeInt powerMod(largeInt& a, largeInt& b, largeInt& n) {
 	largeInt result(1);
-	list<char>* bNum = b.getNum();
+	numLi* bNum = b.getNum();
 	numItr i = --(bNum->end());
 	while (i != bNum->begin()) {
 		for (unsigned char bit(0x80); bit; bit>>=1)
@@ -110,18 +111,17 @@ largeInt powerMod(largeInt& a, largeInt& b, largeInt& n) {
 bool Witness(largeInt a, largeInt n) {
 	int twos = decompose(n - 1);
 	largeInt mu(n - 1);
-	for (int i = 0; i < twos; i++)
-		mu = mu / 2;
+	for (int i = 0; i < twos; i++) mu >>= 1;
 	a = powerMod(a, mu, n);
-	if (a.getNum() == "1") return true;
+	if (a == one) return true;
 	vector<largeInt> B;
 	B.push_back(a);
 	int i = 0;
 	do {
 		B.push_back((B[i] * B[i]) % n);
 		i++;
-		if (B[i].getNum() == "1")
-			if (B[i - 1].getNum() == (n - 1).getNum())
+		if (B[i] == one)
+			if (B[i - 1] == (n - 1))
 				return true;
 			else return false;
 	} while (i < twos);
@@ -209,8 +209,8 @@ int menu() {
 	return choice;
 }
 
-bool checkInt(string str) {
-	int i = str[0] == '-';
+bool checkPosInt(string& str) {
+	int i = 0;
 	while (str[i] != '\0' && str[i] >= '0' && str[i] <= '9') i++;
 	return str[i] == '\0';
 }
@@ -230,7 +230,7 @@ void nhapKhoa() {
 	bool isInt = true, isPrime = true;
 	do {
 		getline(cin, p);
-		isInt = checkInt(p);
+		isInt = checkPosInt(p);
 		isPrime = isInt && FermatTest(largeInt(p), 100);
 		if (!isInt) {
 			cout << "Ban da nhap sai, moi nhap lai: p = ";
@@ -243,31 +243,38 @@ void nhapKhoa() {
 	bool bangP = true;
 	do {
 		getline(cin, q);
-		isInt = checkInt(q);
-		isPrime = isInt && FermatTest(largeInt(p), 100);
+		isInt = checkPosInt(q);
+		isPrime = isInt && FermatTest(largeInt(q), 100);
 		bangP = q == p;
 		if (!isInt) cout << "Ban da nhap sai, moi nhap lai: q = ";
 		else if (!isPrime) cout << "So vua nhap khong nguyen to, moi nhap lai: q = ";
 		else if (bangP) cout << "q phai khac p, moi nhap lai: q = ";
 	} while (!isInt || !isPrime || bangP);
-	
-	N = largeInt(p) * largeInt(q);
-	phiN = (largeInt(p) - 1) * (largeInt(q) - 1);
+	largeInt P, Q;
+	for (size_t i = 0; i < p.size(); i++) { P = P * 10; P += (p[i] & 0xF); }
+	for (size_t i = 0; i < q.size(); i++) { Q = Q * 10; Q += (q[i] & 0xF); }
+	N.setNum(P * Q);
+	phiN.setNum((P - 1) * (Q - 1));
 	cout << "\nNhap khoa e: e = ";
 	bool primeToEachother = true;
+	largeInt EXP;
 	do {
+		EXP.setNum(zero);
 		getline(cin, exp);
-		isInt = checkInt(exp);
-		primeToEachother = isInt && (gcd(largeInt(exp), phiN) == one);
+		isInt = checkPosInt(exp);
 		if (!isInt) {
 			cout << "Ban da nhap sai, moi nhap lai: e = ";
 			cin.clear();
 			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 		}
-		else if (!primeToEachother) cout << "e phai nguyen to cung nhau voi phi(p * q), moi nhap lai: e = ";
+		else {
+			for (size_t i = 0; i < exp.size(); i++) { EXP = EXP * 10; EXP += (exp[i] & 0xF); }
+			primeToEachother = (gcd(EXP, phiN) == one);
+			if (!primeToEachother) cout << "e phai nguyen to cung nhau voi phi(p * q), moi nhap lai: e = ";
+		}
 	} while (!isInt || !primeToEachother);
-	e.setNum(exp);
-	d = nghichDao(e, phiN);
+	e.setNum(EXP);
+	d.setNum(nghichDao(e, phiN));
 }
 
 void sinhKhoa() {
@@ -276,7 +283,7 @@ void sinhKhoa() {
 	bool isInt = true;
 	do {
 		getline(cin, min);
-		isInt = checkInt(min);
+		isInt = checkPosInt(min);
 		if (!isInt) {
 			cout << "Ban da nhap sai, moi nhap lai: ";
 			cin.clear();
@@ -287,7 +294,7 @@ void sinhKhoa() {
 	cout << "2 so nguyen to se chenh lech nhau bao nhieu?(nhap so am hay duong deu duoc, chuong trinh se lay gia tri tuyet doi): ";
 	do {
 		getline(cin, delta);
-		isInt = checkInt(delta);
+		isInt = checkPosInt(delta);
 		if (!isInt) {
 			cout << "Ban da nhap sai, moi nhap lai: ";
 			cin.clear();
@@ -297,12 +304,12 @@ void sinhKhoa() {
 	if (delta[0] == '-') delta = &delta[1];
 
 	largeInt p(min), q(delta);
-	if ((largeInt(min[min.size() - 1]) % 2) == zero) p = p + 1;
-	if ((largeInt(delta[delta.size() - 1]) % 2) == one) q = q + 1;
+	if ((largeInt(min[min.size() - 1]) % 2) == zero) p += 1;
+	if ((largeInt(delta[delta.size() - 1]) % 2) == one) q += 1;
 
-	while (!FermatTest(p, 10)) p = p + 2;
+	while (!FermatTest(p, 10)) p += 2;
 	q = p + q;
-	while (!FermatTest(q, 10)) q = q + 2;
+	while (!FermatTest(q, 10)) q += 2;
 
 	N.setNum(p * q);
 	phiN.setNum((p - 1) * (q - 1));
@@ -331,7 +338,7 @@ void crypting(string a) {//a la "encrypt" hoac "decrypt"
 	fin.close();
 
 	fileName.resize(fileName.size() - 4);
-	largeInt b(content), i(one);
+	largeInt b(content);
 	cout << "b = " << b.getNum() << '\n';
 	largeInt c = (N > b) ? powerMod(b, (a == "encrypt") ? e : d, N) : zero;
 	// TODO:

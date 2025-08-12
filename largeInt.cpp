@@ -1,23 +1,23 @@
 #include "largeInt.h"
 
 largeInt::largeInt(int val) {
-	_num = new list<char>();
+	_num = new numLi();
 	do {
-		_num->push_back((unsigned char)(val & 0xFF));
+		_num->push_back(val & 0xFF);
 		val >>= 8;
 	} while (val && ~val); // if val only have 1 kind of bit, the loop breaks
 	if ((_num->back() ^ val) & 0x80) _num->push_back(val & 0xFF);
 }
 largeInt::largeInt(unsigned int val) {
-	_num = new list<char>();
+	_num = new numLi();
 	do {
-		_num->push_back((unsigned char)(val & 0xFF));
+		_num->push_back(val & 0xFF);
 		val >>= 8;
 	} while (val);
 	if (_num->back() & 0x80) _num->push_back(0);
 }
 largeInt::largeInt(string& str) {
-	_num = new list<char>();
+	_num = new numLi();
 	size_t i = 0;
 	while (str[i] != '\0') _num->push_back(str[i++]);
 	if (_num->back() & 0x80) _num->push_back(0);
@@ -26,7 +26,7 @@ largeInt::largeInt(string& str) {
 void largeInt::setNum(int val) {
 	_num->clear();
 	do {
-		_num->push_back((unsigned char)(val & 0xFF));
+		_num->push_back(val & 0xFF);
 		val >>= 8;
 	} while (val && ~val); // if val only have 1 kind of bit, the loop breaks
 	if ((_num->back() ^ val) & 0x80) _num->push_back(val & 0xFF);
@@ -34,12 +34,12 @@ void largeInt::setNum(int val) {
 void largeInt::setNum(unsigned int val) {
 	_num->clear();
 	do {
-		_num->push_back((unsigned char)(val & 0xFF));
+		_num->push_back(val & 0xFF);
 		val >>= 8;
 	} while (val);
 	if (_num->back() & 0x80) _num->push_back(0);
 }
-void largeInt::setNum(list<char>& a) {
+void largeInt::setNum(numLi& a) {
 	numItr j = --(a.end());
 	while (j != a.begin() && !(*j && ~(*j))) {
 		numItr i = j; i--;
@@ -50,7 +50,7 @@ void largeInt::setNum(list<char>& a) {
 }
 
 bool largeInt::operator>(largeInt& a) {
-	list<char>* otherVal = a.getNum();
+	numLi* otherVal = a.getNum();
 	if ((_num->back() ^ otherVal->back()) & 0x80) return !(_num->back() & 0x80);
 
 	size_t sz = _num->size();
@@ -66,7 +66,7 @@ bool largeInt::operator>(largeInt& a) {
 	return (*i > *j);
 }
 bool largeInt::operator==(largeInt& a) {
-	list<char>* otherVal = a.getNum();
+	numLi* otherVal = a.getNum();
 	size_t sz = _num->size();
 	if (sz != otherVal->size()) return false;
 	numItr i = _num->begin(), j = otherVal->begin(),
@@ -84,37 +84,43 @@ void largeInt::operator>>=(unsigned int a) {
 		_num->pop_front();
 		a -= 8;
 	}
-	// after this, if a > 8 => _num->size = 1
-	if (a > 8) { *i >>= 7; return; }
+	// after this, if a >= 8 => _num->size = 1
+	if (a >> 3) { *i = ((*i & 0x80) ? 0xFF : 0); return; }
+	if (a == 0) return;
 	i = _num->begin();
 	numItr j = i; j++;
 	char moveLeft = 8 - a;
 	while (j != _num->end()) {
-		*i = (*j << moveLeft) | ((unsigned char)(*i) >> a);
+		*i = (*j << moveLeft) | (*i >> a);
 		i = j; j++;
 	}
-	*i >>= a;
+	*i = (char)*i >> a;
+
 	if ((_num->size() > 1) && (*i && ~*i) && !((*i ^ *(--i)) & 0x80))
 		_num->pop_back();
 }
 void largeInt::operator<<=(unsigned int a) {
 	char Nbits = a & 7;
-	numItr i = --(_num->end());
-	char temp = *i ^ (*i << 1);
-	while (Nbits && !(temp & 0x80)) {
-		temp <<= 1;
-		Nbits--;
-	}
-	if (Nbits) _num->push_back(*i >> (8 - (a & 7)));
-	Nbits = a & 7; temp = 8 - Nbits;
-	if (i == _num->begin()) *i <<= Nbits;
-	else {
-		numItr j = i; j--;
-		while (j != _num->begin()) {
-			*i = (*i << Nbits) | ((unsigned char)(*j) >> temp);
-			i = j; j--;
+	if (Nbits) {
+		numItr i = --(_num->end());
+		char temp = *i ^ (*i << 1);
+		while (Nbits && !(temp & 0x80)) {
+			temp <<= 1;
+			Nbits--;
 		}
-		*j <<= Nbits;
+		if (Nbits) _num->push_back((char)*i >> (8 - (a & 7)));
+		Nbits = a & 7; temp = 8 - Nbits;
+		*i <<= Nbits;
+		if (i != _num->begin()) {
+			numItr j = i; j--;
+			while (j != _num->begin()) {
+				*i |= (*j >> temp);
+				*j <<= Nbits;
+				i = j; j--;
+			}
+			*i |= (*j >> temp);
+			*j <<= Nbits;
+		}
 	}
 	a >>= 3;
 	while (a) {
@@ -197,9 +203,9 @@ largeInt largeInt::operator*(largeInt& a) {
 }
 
 largeInt largeInt::karatsuba_simple(largeInt& a, largeInt& b) {
-	list<char>* aNum = a.getNum(), *bNum = b.getNum();
+	numLi* aNum = a.getNum(), *bNum = b.getNum();
 	// Create result with enough space
-	list<char> result(aNum->size() + bNum->size(), 0);
+	numLi result(aNum->size() + bNum->size() - (aNum->back() ? ), 0);
 	
 	// Simple schoolbook multiplication
 	int carry = 0, aPos = 0;
@@ -209,10 +215,10 @@ largeInt largeInt::karatsuba_simple(largeInt& a, largeInt& b) {
 		int bPos = 0;
 		
 		for (numItr bIt = bNum->begin(); bIt != bNum->end(); ++bIt, ++bPos) {
-			int product = *aIt * *bIt + carry;
+			short product = *aIt * *bIt + carry;
 			
 			// Add to existing result
-			auto resultIt = result.begin();
+			numItr resultIt = result.begin();
 			advance(resultIt, aPos + bPos);
 			product += *resultIt;
 			
@@ -236,8 +242,8 @@ largeInt largeInt::karatsuba_simple(largeInt& a, largeInt& b) {
 	return largeInt(result);
 }
 
-largeInt largeInt::karatsuba_multiply(largeInt& a, largeInt& b) {
-	list<char>* aNum = a.getNum(), *bNum = b.getNum();
+largeInt largeInt::karatsuba_multiply(largeInt a, largeInt b) {
+	numLi* aNum = a.getNum(), *bNum = b.getNum();
 	
 	size_t aSize = aNum->size(), bSize = bNum->size();
 	
@@ -246,7 +252,7 @@ largeInt largeInt::karatsuba_multiply(largeInt& a, largeInt& b) {
 	size_t split = aSize >> 1;
 	
 	// Split a into high and low parts
-	list<char> aHigh, aLow;
+	numLi aHigh, aLow;
 	numItr aIt = aNum->begin();
 	for (size_t i = 0; i < split && aIt != aNum->end(); ++i, ++aIt) {
 		aLow.push_back(*aIt);
@@ -257,8 +263,8 @@ largeInt largeInt::karatsuba_multiply(largeInt& a, largeInt& b) {
 	}
 	
 	// Split b into high and low parts
-	list<char> bHigh, bLow;
-	auto bIt = bNum->begin();
+	numLi bHigh, bLow;
+	numItr bIt = bNum->begin();
 	for (size_t i = 0; i < split && bIt != bNum->end(); ++i, ++bIt) {
 		bLow.push_back(*bIt);
 	}

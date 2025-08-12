@@ -56,8 +56,7 @@ bool largeInt::operator>(largeInt& a) {
 	size_t sz = _num->size();
 	if (sz > otherVal->size()) return !(_num->back() & 0x80);
 	if (sz < otherVal->size()) return (_num->back() & 0x80);
-	numItr i = _num->end(), j = otherVal->end(), beg = _num->begin();
-	i--; j--;
+	numItr i = --(_num->end()), j = --(otherVal->end()), beg = _num->begin();
 	while (i != beg) {
 		if (*i > *j) return true;
 		if (*i < *j) return false;
@@ -130,7 +129,7 @@ void largeInt::operator<<=(unsigned int a) {
 }
 
 void largeInt::operator+=(largeInt& a) {
-	list<char>* Aval = a.getNum();
+	numLi* Aval = a.getNum();
 	while (_num->size() < Aval->size())
 		_num->push_back(_num->back() >> 7);
 	numItr i(_num->begin()), i_end(_num->end()),

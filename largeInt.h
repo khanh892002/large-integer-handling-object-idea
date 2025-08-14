@@ -61,6 +61,6 @@ public:
 
 	string getStrInt();
 private:
-	largeInt karatsuba_simple(largeInt& a, largeInt& b); // this function is for multiplying with numbers that are no more than 4B
-	largeInt karatsuba_multiply(largeInt a, largeInt b); // used in * operator, a is make sure to be larger in size than b in the function
+	largeInt normal_mult(largeInt& a, largeInt& b); // this function is for multiplying with numbers that are no more than 4B
+	largeInt karatsuba_mult(largeInt a, largeInt b); // used in * operator, a is make sure to be larger in size than b in the function
 };

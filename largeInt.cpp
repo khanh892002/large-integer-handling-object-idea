@@ -196,25 +196,42 @@ largeInt largeInt::operator-() {
 largeInt largeInt::operator*(largeInt& a) {
 	if (*this == zero || a == zero) return zero;
 	// use simple multiplication for small number
-	if (_num->size() <= 4 && a.getNum()->size() <= 4) return karatsuba_simple(*this, a);
+	bool flip = false;
+	if (_num->back() & 0x80) {
+		for (numItr i = _num->begin(); i != _num->end(); i++)
+			*i = ~*i;
+		*this += 1;
+		flip = true;
+	}
+	if (a.getNum()->back() & 0x80) {
+		a.setNum(-a);
+		flip = !flip;
+	}
+	if (_num->size() <= 4 && a.getNum()->size() <= 4)
+		return (flip) ? -normal_mult(*this, a) : normal_mult(*this, a);
 	// Use Karatsuba algorithm for larger numbers
-	return karatsuba_multiply(*this, a);
+	return (flip) ? -karatsuba_mult(*this, a) : karatsuba_mult(*this, a);
 }
 
-largeInt largeInt::karatsuba_simple(largeInt& a, largeInt& b) {
+largeInt largeInt::normal_mult(largeInt& a, largeInt& b) {
+	// this function work with the assumption that a and b are not negative
+	// if I handle flipping the negativeness in this function
 	numLi* aNum = a.getNum(), *bNum = b.getNum();
 	// Create result with enough space
-	numLi result(aNum->size() + bNum->size() - (aNum->back() ? ), 0);
+	numLi result(aNum->size() + bNum->size(), 0);
 	
 	// Simple schoolbook multiplication
-	int carry = 0, aPos = 0;
+	unsigned short carry = 0;
+	size_t aPos = 0, bPos;
 	
 	for (numItr aIt = aNum->begin(); aIt != aNum->end(); ++aIt, ++aPos) {
+		if (*aIt == 0) continue;
+
 		carry = 0;
-		int bPos = 0;
+		bPos = 0;
 		
 		for (numItr bIt = bNum->begin(); bIt != bNum->end(); ++bIt, ++bPos) {
-			short product = *aIt * *bIt + carry;
+			unsigned short product = *aIt * *bIt + carry;
 			
 			// Add to existing result
 			numItr resultIt = result.begin();
@@ -227,27 +244,26 @@ largeInt largeInt::karatsuba_simple(largeInt& a, largeInt& b) {
 		
 		// Handle remaining carry
 		if (carry > 0) {
-			auto resultIt = result.begin();
+			numItr resultIt = result.begin();
 			advance(resultIt, aPos + bPos);
 			*resultIt = carry;
 		}
 	}
 	
-	// Remove leading zeros
-	while (result.size() > 1 && result.back() == 0) {
-		result.pop_back();
-	}
+	// Remove unnecessary leading zeros
+	while (result.size() > 1 && result.back() == 0) result.pop_back();
+	if (result.back() & 0x80) result.push_back(0);
 	
 	return largeInt(result);
 }
 
-largeInt largeInt::karatsuba_multiply(largeInt a, largeInt b) {
+largeInt largeInt::karatsuba_mult(largeInt a, largeInt b) {
 	numLi* aNum = a.getNum(), *bNum = b.getNum();
 	
 	size_t aSize = aNum->size(), bSize = bNum->size();
 	
-	if (aSize < bSize) return karatsuba_multiply(b, a);
-	if (aSize <= 4) return karatsuba_simple(a, b);
+	if (aSize < bSize) return karatsuba_mult(b, a);
+	if (aSize <= 4) return normal_mult(a, b);
 	size_t split = aSize >> 1;
 	
 	// Split a into high and low parts
@@ -295,9 +311,7 @@ largeInt largeInt::karatsuba_multiply(largeInt a, largeInt b) {
 	result += z1Shifted;
 	
 	// Add z2 * 2^(2*split)
-	largeInt z2Shifted(z2);
-	z2Shifted <<= (2 * split * 8);
-	result += z2Shifted;
+	result += z2 << (split << 4); // (z2 << (2 * split * 8))
 	
 	return result;
 }

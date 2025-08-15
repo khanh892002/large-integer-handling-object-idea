@@ -131,20 +131,18 @@ void largeInt::operator<<=(unsigned int a) {
 void largeInt::operator+=(largeInt& a) {
 	numLi* Aval = a.getNum();
 	while (_num->size() < Aval->size())
-		_num->push_back(_num->back() >> 7);
+		_num->push_back((_num->back() * 0x80) ? 0xFF : 0);
 	numItr i(_num->begin()), i_end(_num->end()),
 			j(Aval->begin()), j_end(Aval->end());
 	short temp = 0;
 	while (j != j_end) {
-		temp += (*i & 0xFF) + (*j & 0xFF);
-		*i = temp & 0xFF;
+		temp += *i + *j;
+		*i = temp;
 		temp >>= 8;
 		i++; j++;
 	}
-	while (i != i_end && temp) {
-		if (++(*i)) temp = 0;
-		i++;
-	}
+	while (i != i_end && temp) if (++(*i++)) temp = 0;
+	
 	i_end--;
 	while ((i_end != _num->begin()) && !(*i_end && ~*i_end)) {
 		i = i_end; i--;
@@ -156,16 +154,10 @@ void largeInt::operator+=(largeInt& a) {
 void largeInt::operator%=(largeInt& a) {
 	if (a == zero) return;
 	bool isNeg = a < zero;
-	if (isNeg) {
-		for (numItr i = a.getNum()->begin(); i != a.getNum()->end(); i++)
-			*i = ~*i;
-		a += 1;
-	}
+	if (isNeg) a.Neg();
 	largeInt temp(a);
 	if (*this < zero) {
-		for (numItr i = _num->begin(); i != _num->end(); i++)
-			*i = ~*i;
-		*this += 1;
+		this->Neg();
 
 		while (temp < *this) temp <<= 1;
 		temp -= *this;
@@ -177,47 +169,45 @@ void largeInt::operator%=(largeInt& a) {
 		while (temp > *this) temp >>= 1;
 		*this -= temp;
 	}
-	if (isNeg) {
-		for (numItr i = a.getNum()->begin(); i != a.getNum()->end(); i++)
-			*i = ~*i;
-		a += 1;
-	}
+	if (isNeg) a.Neg();
 }
-
-largeInt largeInt::operator-() {
-	largeInt res(*_num);
-	numItr i_end = res.getNum()->end();
-	for (numItr i = res.getNum()->begin(); i != i_end; i++)
-		*i = ~*i;
-	res += 1;
-	return res;
+void largeInt::Neg() {
+	for (numItr i(_num->begin()); i != _num->end(); i++)
+		*i ^= 0xFF;
+	*this += 1;
 }
 
 largeInt largeInt::operator*(largeInt& a) {
-	if (*this == zero || a == zero) return zero;
-	// use simple multiplication for small number
-	bool flip = false;
+	char flip = 0;
 	if (_num->back() & 0x80) {
-		for (numItr i = _num->begin(); i != _num->end(); i++)
-			*i = ~*i;
-		*this += 1;
-		flip = true;
+		flip = 1;
+		this->Neg();
 	}
 	if (a.getNum()->back() & 0x80) {
-		a.setNum(-a);
-		flip = !flip;
+		flip |= 2;
+		a.Neg();
 	}
-	if (_num->size() <= 4 && a.getNum()->size() <= 4)
-		return (flip) ? -normal_mult(*this, a) : normal_mult(*this, a);
+	largeInt res(multiply(*this, a));
+	if (flip ^ (flip >> 1)) res.Neg();
+	if (flip & 1) this->Neg();
+	if (flip & 2) a.Neg();
+	return res;
+}
+
+largeInt largeInt::multiply(largeInt& a, largeInt& b) {
+	// all number are assumed to be not negative
+	if (*this == zero || a == zero) return zero;
+	// use simple multiplication for small number
+	if (_num->size() <= 4 && a.getNum()->size() <= 4) return normal_mult(*this, a);
 	// Use Karatsuba algorithm for larger numbers
-	return (flip) ? -karatsuba_mult(*this, a) : karatsuba_mult(*this, a);
+	return karatsuba_mult(*this, a);
 }
 
 largeInt largeInt::normal_mult(largeInt& a, largeInt& b) {
 	// this function work with the assumption that a and b are not negative
-	// if I handle flipping the negativeness in this function
 	numLi* aNum = a.getNum(), *bNum = b.getNum();
 	// Create result with enough space
+	// It is provable that the result size is not larger than the sum of the numbers size
 	numLi result(aNum->size() + bNum->size(), 0);
 	
 	// Simple schoolbook multiplication
@@ -253,7 +243,6 @@ largeInt largeInt::normal_mult(largeInt& a, largeInt& b) {
 	// Remove unnecessary leading zeros
 	while (result.size() > 1 && result.back() == 0) result.pop_back();
 	if (result.back() & 0x80) result.push_back(0);
-	
 	return largeInt(result);
 }
 
@@ -262,61 +251,83 @@ largeInt largeInt::karatsuba_mult(largeInt a, largeInt b) {
 	
 	size_t aSize = aNum->size(), bSize = bNum->size();
 	
-	if (aSize < bSize) return karatsuba_mult(b, a);
+	if (aSize < bSize) {
+		numLi* temp = aNum;
+		aNum = bNum;
+		bNum = temp;
+	}
 	if (aSize <= 4) return normal_mult(a, b);
 	size_t split = aSize >> 1;
 	
 	// Split a into high and low parts
 	numLi aHigh, aLow;
 	numItr aIt = aNum->begin();
-	for (size_t i = 0; i < split && aIt != aNum->end(); ++i, ++aIt) {
+	for (size_t i = 0; i < split && aIt != aNum->end(); ++i, ++aIt)
 		aLow.push_back(*aIt);
-	}
-	while (aIt != aNum->end()) {
-		aHigh.push_back(*aIt);
-		aIt++;
-	}
+	if (aLow.back() & 0x80) aLow.push_back(0);
+		while (aIt != aNum->end()) aHigh.push_back(*(aIt++));
 	
 	// Split b into high and low parts
 	numLi bHigh, bLow;
 	numItr bIt = bNum->begin();
-	for (size_t i = 0; i < split && bIt != bNum->end(); ++i, ++bIt) {
+	for (size_t i = 0; i < split && bIt != bNum->end(); ++i, ++bIt)
 		bLow.push_back(*bIt);
-	}
-	for (; bIt != bNum->end(); ++bIt) {
-		bHigh.push_back(*bIt);
-	}
+	if (bLow.back() & 0x80) bLow.push_back(0);
+	while (bIt != bNum->end()) bHigh.push_back(*(bIt++));
 	
 	// Create largeInt objects for the parts
-	largeInt aHighInt(aHigh);
-	largeInt aLowInt(aLow);
-	largeInt bHighInt(bHigh);
-	largeInt bLowInt(bLow);
+	// the HighInts's nums may larger than the lowInt's ones by 1 byte
+	largeInt aHighInt(aHigh), bHighInt(bHigh),
+			 aLowInt(aLow), bLowInt(bLow);
 	
 	// Karatsuba's three recursive multiplications
-	largeInt z0(aLowInt * bLowInt);
-	largeInt z2(aHighInt * bHighInt);
-	
-	// (a_high + a_low) * (b_high + b_low) - z0 - z2
-	largeInt sumA(aHighInt + aLowInt);
-	largeInt sumB(bHighInt + bLowInt);
-	largeInt z1(sumA * sumB - z0 - z2);
+	largeInt z0(karatsuba_mult(aLowInt, bLowInt)),
+			 z2(karatsuba_mult(aHighInt, bHighInt));
+	if (z0.getNum()->back() & 0x80) z0.getNum()->push_back(0);
+	if (z2.getNum()->back() & 0x80) z2.getNum()->push_back(0);
+
+	// z1 = a_high * b_low + a_low * b_high
+	// = (a_high + a_low) * (b_high + b_low) - z0 - z2
+	largeInt z1(aHighInt); z1 += aLowInt;
+	z1.setNum(karatsuba_mult(z1, bHighInt + bLowInt));
+	z1 -= z0; z1 -= z2;
 	
 	// Combine results: z2 * 2^(2*split) + z1 * 2^split + z0
-	largeInt result(z0);
+	// recycling aNum
+	aNum = z0.getNum();
+	while (aNum->size() < split) aNum->push_back(0);
+	while (aNum->size() > split) aNum->pop_back();
+	aNum->splice(aNum->end(), *(z2.getNum()));
+	// z0 is now (z2 << (2 split)) | z0)
+	z1 <<= (split << 3); // split * 8
+	z0 += z1;
 	
-	// Add z1 * 2^split
-	largeInt z1Shifted(z1);
-	z1Shifted <<= (split << 3);
-	result += z1Shifted;
-	
-	// Add z2 * 2^(2*split)
-	result += z2 << (split << 4); // (z2 << (2 * split * 8))
-	
-	return result;
+	return z0;
 }
 largeInt largeInt::operator/(largeInt& a) {
-	largeInt res;
-	
+	largeInt divided(*_num);
+	if (_num->back() & 0x80) divided.Neg();
+	bool aNeg = a.getNum()->back() & 0x80;
+	if (aNeg) a.Neg();
+
+
+
+	if (aNeg) a.Neg();
+
+
 	return res;
+}
+
+string largeInt::getStrInt() {
+	bool isNeg = _num->back() & 0x80;
+	string result = "";
+	if (isNeg) {
+		result += '-';
+		this->Neg();
+	}
+
+	// I may need to reuse the old version of largeInt for this :(((
+
+	if (isNeg) this->Neg();
+	return result;
 }

@@ -39,11 +39,12 @@ public:
 	void operator-=(largeInt& a) { *this += -a; };
 	void operator%=(largeInt&);
 	void operator/=(largeInt&);
+	void Neg();
 
-	largeInt operator-();
+	largeInt operator-() { largeInt res(*_num); res.Neg(); return res; }
 	largeInt operator+(largeInt& a) { largeInt res(*_num); res += a; return res; }
 	largeInt operator-(largeInt& a) { largeInt res(*_num); res -= a; return res; }
-	largeInt operator*(largeInt& a) { largeInt res(*_num); res *= a; return res; }
+	largeInt operator*(largeInt&);
 	largeInt operator/(largeInt& a) { largeInt res(*_num); res /= a; return res; }
 	largeInt operator%(largeInt& a) { largeInt res(*_num); res %= a; return res; }
 	largeInt operator>>(unsigned int a) { largeInt res(*_num); res >>= a; return res; }
@@ -61,6 +62,7 @@ public:
 
 	string getStrInt();
 private:
-	largeInt normal_mult(largeInt& a, largeInt& b); // this function is for multiplying with numbers that are no more than 4B
-	largeInt karatsuba_mult(largeInt a, largeInt b); // used in * operator, a is make sure to be larger in size than b in the function
+	largeInt multiply(largeInt&, largeInt&);
+	largeInt normal_mult(largeInt&, largeInt&); // this function is for multiplying with numbers that are no more than 4B
+	largeInt karatsuba_mult(largeInt, largeInt); // used in * operator, a is make sure to be larger in size than b in the function
 };

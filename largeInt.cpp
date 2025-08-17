@@ -40,6 +40,7 @@ void largeInt::setNum(unsigned int val) {
 	if (_num->back() & 0x80) _num->push_back(0);
 }
 void largeInt::setNum(numLi& a) {
+	if (a.size() == 0) { _num->assign(1, 0); return; }
 	numItr j = --(a.end());
 	while (j != a.begin() && !(*j && ~(*j))) {
 		numItr i = j; i--;
@@ -188,7 +189,7 @@ largeInt largeInt::operator*(largeInt& a) {
 		a.Neg();
 	}
 	largeInt res(multiply(*this, a));
-	if (flip ^ (flip >> 1)) res.Neg();
+	if ((flip & 1) ^ (flip >> 1)) res.Neg();
 	if (flip & 1) this->Neg();
 	if (flip & 2) a.Neg();
 	return res;
@@ -305,17 +306,37 @@ largeInt largeInt::karatsuba_mult(largeInt a, largeInt b) {
 	return z0;
 }
 largeInt largeInt::operator/(largeInt& a) {
-	largeInt divided(*_num);
-	if (_num->back() & 0x80) divided.Neg();
-	bool aNeg = a.getNum()->back() & 0x80;
-	if (aNeg) a.Neg();
+	if (a == zero) throw runtime_error("Divided by 0");
+	
+	largeInt divided(*_num), dividing, result;
+	char flip = 0;
+	if (_num->back() & 0x80) {
+		flip = 1;
+		divided.Neg();
+	}
+	if (a.getNum()->back() & 0x80) {
+		flip |= 2;
+		a.Neg();
+		dividing.setNum(a);
+	}
 
+	if (divided.getNum()->size() > dividing.getNum()->size())
+		dividing <<= ((divided.getNum()->size() - dividing.getNum()->size()) << 3);
+	while (divided >= dividing) dividing <<= 1;
+	while (divided < dividing) dividing >>= 1;
+	while (divided >= a) {
+		divided -= dividing;
+		result += 1;
+		if (divided < a) break;
+		while (divided < dividing) {
+			result <<= 1;
+			dividing >>= 1;
+		}
+	}
 
-
-	if (aNeg) a.Neg();
-
-
-	return res;
+	if (flip & 2) a.Neg();
+	if ((flip & 1) ^ (flip >> 1)) result.Neg();
+	return result;
 }
 
 string largeInt::getStrInt() {

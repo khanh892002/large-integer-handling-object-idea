@@ -61,7 +61,25 @@ public:
 	largeInt operator%(int a) { return largeInt(*this) % largeInt(a); }
 
 	string getStrInt();
+	
 private:
+	class strHelper {
+	private: string _num;
+	public:
+		strHelper() : _num('0') {}
+		strHelper(unsigned char a) {
+			while (a) { // '0' -> '9' <=> 0b00110000 -> 0b00111001
+				_num = (char)(0x30 | (a % 10)) + _num;
+				a /= 10;
+			}
+			if (_num.size() == 0) _num += '0';
+		}
+		string getNum() { return _num; }
+
+		void operator+=(strHelper&);
+		void doubleUp();
+	};
+
 	largeInt multiply(largeInt&, largeInt&);
 	largeInt normal_mult(largeInt&, largeInt&); // this function is for multiplying with numbers that are no more than 4B
 	largeInt karatsuba_mult(largeInt, largeInt); // used in * operator, a is make sure to be larger in size than b in the function

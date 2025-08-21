@@ -339,16 +339,62 @@ largeInt largeInt::operator/(largeInt& a) {
 	return result;
 }
 
+void largeInt::strHelper::operator+=(largeInt::strHelper& a) {
+	string aNum = a.getNum();
+	size_t numI(_num.size() - 1), aI(aNum.size() - 1);
+	bool carry = false;
+	while (~numI && ~aI) {
+		_num[numI] &= 0xF; _num[numI] += (aNum[aI] & 0xF);
+		if (carry) _num[numI]++;
+		carry = _num[numI] > 9;
+		if (carry) _num[numI] -= 10;
+		_num[numI] |= 0x30;
+		numI--; aI--;
+	}
+	if (carry) {
+		while (~numI && (_num[numI] == '9')) _num[numI--] = 0;
+		if (~numI) _num[numI]++;
+		else if (~aI) {
+			while (~aI && (aNum[aI] == '9')) _num = '0' + _num;
+			if (~aI) {
+				_num = char(aNum[aI--] + 1) + _num;
+				while (~aI) _num = aNum[aI--] + _num;
+			}
+			else _num = '1' + _num;
+		}
+		else _num = '1' + _num;
+	} else
+		while (~aI) _num = aNum[aI--] + _num;
+}
+void largeInt::strHelper::doubleUp() {
+	size_t i = _num.size() - 1;
+	bool carry = false;
+	while (~i) {
+		_num[i] &= 0xF; _num[i] <<= 1;
+		if (carry) _num[i]++;
+		carry = _num[i] > 9;
+		if (carry) _num[i] -= 10;
+		_num[i] |= 0x30;
+		i--;
+	}
+	if (carry) _num = '1' + _num;
+}
+
 string largeInt::getStrInt() {
 	bool isNeg = _num->back() & 0x80;
-	string result = "";
-	if (isNeg) {
-		result += '-';
-		this->Neg();
-	}
-
-	// I may need to reuse the old version of largeInt for this :(((
-
 	if (isNeg) this->Neg();
-	return result;
+	
+	strHelper result, pow2(1);
+	for (numItr i(_num->begin()); i != _num->end(); i++)
+		for (char bit = 1; bit; bit <<= 1) {
+			if (bit & *i) result += pow2;
+			pow2.doubleUp();
+		}
+
+	string res = result.getNum();
+	if (isNeg) {
+		this->Neg();
+		res = '-' + res;
+	}
+	return res;
 }

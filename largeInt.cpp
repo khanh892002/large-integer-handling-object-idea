@@ -351,8 +351,9 @@ void largeInt::strHelper::operator+=(largeInt::strHelper& a) {
 		_num[numI] |= 0x30;
 		numI--; aI--;
 	}
+	// either numI or aI is 0xFFFFFF... now
 	if (carry) {
-		while (~numI && (_num[numI] == '9')) _num[numI--] = 0;
+		while (~numI && (_num[numI] == '9')) _num[numI--] = '0';
 		if (~numI) _num[numI]++;
 		else if (~aI) {
 			while (~aI && (aNum[aI] == '9')) _num = '0' + _num;

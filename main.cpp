@@ -17,8 +17,8 @@ largeInt random(largeInt& a) {
 	// assume a is positive
 	// this function return a random number smaller than a
 	largeInt result;
-	numLi* num = a.getNum(), *res = result.getNum();
-	size_t sz = (rand() % num->size()) + 1;
+	numLi* res = result.getNum();
+	size_t sz = (rand() % a.getNum()->size()) + 1;
 	int temp;
 	while (sz >> 2) {
 		temp = rand();
@@ -34,8 +34,15 @@ largeInt random(largeInt& a) {
 		temp >>= 8;
 		sz--;
 	}
-	if (!((*(--(--res->end()))) & 0x80)) res->pop_back();
-	// if num is 00000000 0...
+	
+	// remove spare 0s in the end of res
+	numItr i = --(res->end());
+	if (*i & 0x80) res->push_back(0);
+	while (i != res->begin() && !*i) {
+		i--;
+		if (!(*i & 0x80)) res->pop_back();
+	}
+
 	result %= a;
 	return result;
 }

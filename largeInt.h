@@ -38,14 +38,14 @@ public:
 	void operator+=(largeInt&);
 	void operator-=(largeInt& a) { *this += -a; };
 	void operator%=(largeInt&);
-	void operator/=(largeInt&);
+	void operator/=(largeInt& a) { this->setNum(*this / a); }
 	void Neg();
 
 	largeInt operator-() { largeInt res(*_num); res.Neg(); return res; }
 	largeInt operator+(largeInt& a) { largeInt res(*_num); res += a; return res; }
 	largeInt operator-(largeInt& a) { largeInt res(*_num); res -= a; return res; }
 	largeInt operator*(largeInt&);
-	largeInt operator/(largeInt& a) { largeInt res(*_num); res /= a; return res; }
+	largeInt operator/(largeInt&);
 	largeInt operator%(largeInt& a) { largeInt res(*_num); res %= a; return res; }
 	largeInt operator>>(unsigned int a) { largeInt res(*_num); res >>= a; return res; }
 	largeInt operator<<(unsigned int a) { largeInt res(*_num); res <<= a; return res; }

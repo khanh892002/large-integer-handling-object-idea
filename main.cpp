@@ -60,21 +60,19 @@ bool FermatTest(largeInt n, int k) {
 		} while (inUsedList(usedNums, a));
 		usedNums.push_back(a);
 
-		largeInt power(1);
+		largeInt power(one);
 		numItr i = --(muLi->end());
 		while (i != muLi->begin()) {
 			for (unsigned char bit(0x80); bit; bit>>=1)
-				power.setNum(*(
+				power.setNum(
 					(((*i & bit) ? power * power * a : power * power) % n)
-					.getNum()
-				));
+				);
 			i--;
 		}
 		for (unsigned char bit(0x80); bit; bit>>=1)
-			power.setNum(*(
+			power.setNum(
 				(((*i & bit) ? power * power * a : power * power) % n)
-				.getNum()
-			));
+			);
 		if (power != one) return false;
 		count++;
 	}
@@ -149,7 +147,7 @@ bool MillerRabinTest(largeInt n, int k) {
 	int i = 0;
 	while (i < k) {
 		do {
-			a.setNum(*(random(n - 2).getNum()));
+			a.setNum(random(n - 2));
 			a = a + 2;
 		} while (inUsedList(arr, a));
 		arr.push_back(a);
@@ -216,70 +214,76 @@ int menu() {
 	return choice;
 }
 
-bool checkPosInt(string& str) {
-	int i = 0;
-	while (str[i] != '\0' && str[i] >= '0' && str[i] <= '9') i++;
-	return str[i] == '\0';
-}
-
 bool operator==(string& a, string& b) {
 	int sizea = a.size(), sizeb = b.size();
 	if (a != b) return false;
-	for (int i = 0; i < sizea; i++)
+	for (size_t i = 0; i < sizea; i++)
 		if (a[i] != b[i]) return false;
 	return true;
 }
 
 void nhapKhoa() {
+	largeInt P, Q, EXP;
 	string p, q, exp;
 	cout << "Nhap 2 so nguyen to p va q:\n";
 	cout << "Nhap p: p = ";
-	bool isInt = true, isPrime = true;
+	bool Continue = true;
 	do {
 		getline(cin, p);
-		isInt = checkPosInt(p);
-		isPrime = isInt && FermatTest(largeInt(p), 100);
-		if (!isInt) {
+		try {
+			P.setNumWithStrNum(p);
+			bool isPrime = FermatTest(P, 100);
+			if (!isPrime) cout << "So vua nhap khong nguyen to, moi nhap lai: p = ";
+			else Continue = false;
+		} catch (runtime_error e) {
 			cout << "Ban da nhap sai, moi nhap lai: p = ";
 			cin.clear();
 			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 		}
-		else if (!isPrime) cout << "So vua nhap khong nguyen to, moi nhap lai: p = ";
-	} while (!isInt || !isPrime);
+	} while (Continue);
+
 	cout << "Nhap q: q = ";
-	bool bangP = true;
+	Continue = true;
 	do {
 		getline(cin, q);
-		isInt = checkPosInt(q);
-		isPrime = isInt && FermatTest(largeInt(q), 100);
-		bangP = q == p;
-		if (!isInt) cout << "Ban da nhap sai, moi nhap lai: q = ";
-		else if (!isPrime) cout << "So vua nhap khong nguyen to, moi nhap lai: q = ";
-		else if (bangP) cout << "q phai khac p, moi nhap lai: q = ";
-	} while (!isInt || !isPrime || bangP);
-	largeInt P, Q;
-	for (size_t i = 0; i < p.size(); i++) { P = P * 10; P += (p[i] & 0xF); }
-	for (size_t i = 0; i < q.size(); i++) { Q = Q * 10; Q += (q[i] & 0xF); }
+		try {
+			Q.setNumWithStrNum(q);
+			bool isPrime = FermatTest(Q, 100);
+			if (!isPrime) {
+				cout << "So vua nhap khong nguyen to, moi nhap lai: q = ";
+				continue;
+			}
+			if (q == p) {
+				cout << "q phai khac p, moi nhap lai: q = ";
+				continue;
+			}
+			Continue = false;
+		} catch (runtime_error e) {
+			cout << "Ban da nhap sai, moi nhap lai: q = ";
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+		}
+	} while (Continue);
+
 	N.setNum(P * Q);
 	phiN.setNum((P - 1) * (Q - 1));
+	
 	cout << "\nNhap khoa e: e = ";
-	bool primeToEachother = true;
-	largeInt EXP;
+	Continue = true;
 	do {
 		EXP.setNum(zero);
 		getline(cin, exp);
-		isInt = checkPosInt(exp);
-		if (!isInt) {
+		try {
+			EXP.setNumWithStrNum(exp);
+			if (gcd(EXP, phiN) != one) cout << "e phai nguyen to cung nhau voi phi(p * q), moi nhap lai: e = ";
+			else Continue = false;
+		} catch (runtime_error e) {
 			cout << "Ban da nhap sai, moi nhap lai: e = ";
 			cin.clear();
 			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 		}
-		else {
-			for (size_t i = 0; i < exp.size(); i++) { EXP = EXP * 10; EXP += (exp[i] & 0xF); }
-			primeToEachother = (gcd(EXP, phiN) == one);
-			if (!primeToEachother) cout << "e phai nguyen to cung nhau voi phi(p * q), moi nhap lai: e = ";
-		}
-	} while (!isInt || !primeToEachother);
+	} while (Continue);
+
 	e.setNum(EXP);
 	d.setNum(nghichDao(e, phiN));
 }

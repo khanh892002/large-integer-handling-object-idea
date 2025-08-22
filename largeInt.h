@@ -25,6 +25,7 @@ public:
 	void setNum(unsigned int);
 	void setNum(numLi&);
 	void setNum(largeInt& a) { this->setNum(*(a.getNum())); }
+	void setNumWithStrNum(string&);
 	
 	bool operator>(largeInt&);
 	bool operator<(largeInt& a) { return a > *this; }
@@ -67,6 +68,7 @@ private:
 	private: string _num;
 	public:
 		strHelper() : _num('0') {}
+		strHelper(string&);
 		strHelper(unsigned char a) {
 			while (a) { // '0' -> '9' <=> 0b00110000 -> 0b00111001
 				_num = (char)(0x30 | (a % 10)) + _num;

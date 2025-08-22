@@ -49,6 +49,10 @@ void largeInt::setNum(numLi& a) {
 	}
 	_num->assign(a.begin(), ((j == a.begin()) ? ++j : j));
 }
+void largeInt::setNumWithStrNum(string& str) {
+	strHelper num(str);
+	// TODO
+}
 
 bool largeInt::operator>(largeInt& a) {
 	numLi* otherVal = a.getNum();
@@ -337,6 +341,16 @@ largeInt largeInt::operator/(largeInt& a) {
 	if (flip & 2) a.Neg();
 	if ((flip & 1) ^ (flip >> 1)) result.Neg();
 	return result;
+}
+
+largeInt::strHelper::strHelper(string& str) {
+	if (str.size() == 0) throw runtime_error("largeInt::strHelper construct failed: empty string");
+	string::iterator i = str.begin(); if (*i == '-') i++;
+	while (i != str.end()) {
+		if ((*i < '0') || (*i > '9')) throw runtime_error("largeInt::strHelper construct failed: Not a numeric string input");
+		i++;
+	}
+	_num = str;
 }
 
 void largeInt::strHelper::operator+=(largeInt::strHelper& a) {

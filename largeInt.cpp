@@ -49,7 +49,7 @@ void largeInt::setNum(numLi& a) {
 	}
 	_num->assign(a.begin(), ((j == a.begin()) ? ++j : j));
 }
-void largeInt::setNumWithStrNum(string& str) {
+void largeInt::setNumWithStrNum(const string& str) {
 	strHelper num(str);
 	// TODO
 }
@@ -343,9 +343,9 @@ largeInt largeInt::operator/(largeInt& a) {
 	return result;
 }
 
-largeInt::strHelper::strHelper(string& str) {
+largeInt::strHelper::strHelper(const string& str) {
 	if (str.size() == 0) throw runtime_error("largeInt::strHelper construct failed: empty string");
-	string::iterator i = str.begin(); if (*i == '-') i++;
+	auto i = str.begin(); if (*i == '-') i++;
 	while (i != str.end()) {
 		if ((*i < '0') || (*i > '9')) throw runtime_error("largeInt::strHelper construct failed: Not a numeric string input");
 		i++;

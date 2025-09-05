@@ -50,8 +50,19 @@ void largeInt::setNum(numLi& a) {
 	_num->assign(a.begin(), ((j == a.begin()) ? ++j : j));
 }
 void largeInt::setNumWithStrNum(const string& str) {
-	strHelper num(str);
+	auto i = str.begin(); if (*i == '-') i++;
+	while (i != str.end()) {
+		if ((*i < '0') || (*i > '9')) throw runtime_error("largeInt setted with a bad numeric string");
+		i++;
+	} 
+	i = str.begin();
+	bool isNeg = *i == '-';
+	if (isNeg) i++;
+
+	_num->clear();
 	// TODO
+
+	if (isNeg) this->Neg();
 }
 
 bool largeInt::operator>(largeInt& a) {
@@ -354,32 +365,34 @@ largeInt::strHelper::strHelper(const string& str) {
 }
 
 void largeInt::strHelper::operator+=(largeInt::strHelper& a) {
-	string aNum = a.getNum();
-	size_t numI(_num.size() - 1), aI(aNum.size() - 1);
+	const string& aNum = a.getNum();
+	auto numI = _num.end(); numI--;
+	auto aI = aNum.end(); aI--;
+	
 	bool carry = false;
-	while (~numI && ~aI) {
-		_num[numI] &= 0xF; _num[numI] += (aNum[aI] & 0xF);
-		if (carry) _num[numI]++;
-		carry = _num[numI] > 9;
-		if (carry) _num[numI] -= 10;
-		_num[numI] |= 0x30;
+	while (*numI && *aI) {
+		*numI &= 0xF; *numI += (*aI & 0xF);
+		if (carry) (*numI)++;
+		carry = *numI > 9;
+		if (carry) *numI -= 10;
+		*numI |= 0x30;
 		numI--; aI--;
 	}
-	// either numI or aI is 0xFFFFFF... now
+	
 	if (carry) {
-		while (~numI && (_num[numI] == '9')) _num[numI--] = '0';
-		if (~numI) _num[numI]++;
-		else if (~aI) {
-			while (~aI && (aNum[aI] == '9')) _num = '0' + _num;
-			if (~aI) {
-				_num = char(aNum[aI--] + 1) + _num;
-				while (~aI) _num = aNum[aI--] + _num;
+		while (*numI == '9') *(numI--) = '0';
+		if (*numI) (*numI)++;
+		else if (*aI) {
+			while (*aI == '9') _num = '0' + _num;
+			if (*aI) {
+				_num = char(*(aI--) + 1) + _num;
+				while (*aI) _num = *(aI--) + _num;
 			}
 			else _num = '1' + _num;
 		}
 		else _num = '1' + _num;
 	} else
-		while (~aI) _num = aNum[aI--] + _num;
+		while (*aI) _num = *(aI--) + _num;
 }
 void largeInt::strHelper::doubleUp() {
 	size_t i = _num.size() - 1;

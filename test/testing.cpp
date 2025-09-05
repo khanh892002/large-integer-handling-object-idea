@@ -34,17 +34,17 @@ int main() {
         b.setNumWithStrNum(testCase.second);
         
         cout << "Testing: " << testCase.first << " * " << testCase.second << "\n"
-               << "Number of digits: " << testCase.first.length() << " and " << testCase.second.length() << "\n";
+            << "Number of digits: " << testCase.first.length() << " and " << testCase.second.length() << "\n";
         
         // Measure Karatsuba multiplication time
         largeInt result;
         double time = measureTime([&]() {result = a * b;});
         
         cout << "Karatsuba multiplication time: " << time << " ms\n"
-            << "Result: ";
+            << "Result: " << result.getStrInt();
         
         // Display result (simplified - just show first few digits)
-        cout << "[" << result.getNum()->size() << " bytes]\n"
+        cout << " [" << result.getNum()->size() << " bytes]\n"
             << "----------------------------------------\n\n";
     }
     // Demonstrate the crossover point
@@ -56,8 +56,8 @@ int main() {
         string num1(digits, '9');
         string num2(digits, '9');
         
-        largeInt a = createLargeNumber(num1);
-        largeInt b = createLargeNumber(num2);
+        a.setNumWithStrNum(num1);
+        b.setNumWithStrNum(num2);
         
         double time = measureTime([&]() {largeInt result = a * b;});
         

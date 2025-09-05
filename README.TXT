@@ -5,3 +5,6 @@ Swapping value would be simplier if we use pointer of vector for object's attrib
 The decimal parsing uses a helper class implemented in the largeInt class
 
 Run the program: open the Developer Command Prompt for VSCode -> run 'cl main.cpp largeInt.cpp \o ./main.exe'
+
+EXP Gained:
+we can just build largeInt.obj and reuse it when create the executable files: 'cl largeInt.cpp' -> 'cl main.cpp largeInt.obj'
